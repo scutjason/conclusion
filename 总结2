@@ -1,0 +1,29 @@
+strace -F -c -p `pgrep ipdr`  查看ipdr进程的统计，系统调用
+pstack `pgrep ipdr` 查看ipdr进程的栈  
+pstree -a -p `pgrep ipdr` 查看ipdr进程的线程数，显示线程号  
+ps -Lf `pgrep ipdr`       查看ipdr进程的线程数，显示线程号  
+top
+free -m
+df
+du -sh *
+oprofile 看cpu统计的
+  opcontrol --deinit 
+  opcontrol --init 
+  opcontrol --reset 
+  opcontrol --no-vmlinux
+  opcontrol --separate=lib  先执行上面的几条命令，
+  opcontrol -i logserver  到 logserver目录下执行这条命令，和下面的那条 start。。不报错则表示成功，否则按提示操作，输入echo 1 。。
+  opcontrol --start  
+  
+opreport -l   列出top占cpu的函数
+opreport -d  列出详细信息
+strace -c -f -p 线程号， 可以查看线程下的函数调用统计
+strace -f -p 线程号， 可以查看线程下的函数调用打印
+netstat -apn |grep 1024
+gunzip 解压gz文件
+ll -rt 
+ll -lt 按时间排序
+sar -n DEV 1
+pmap -d 14596
+cat /proc/2344/maps |grep tcm
+lsio
