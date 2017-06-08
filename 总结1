@@ -1,0 +1,222 @@
+1、检查.o文件的栈大小
+  objdump -d zvos_log.o | /usr/src/linux-2.6.33.20/scripts/checkstack.pl x86_64 >stack.txt
+  
+2、gdb解析core文件
+	core.8707   8707是进程号
+	gdb ./a.out core.8707
+	(gdb)bt
+  
+3、查看当前目录下所有包含的文件、目录大小
+  du -sh *
+  
+4、grep 搜索
+  grep -w SPR20_US ./* -rn |grep -vE "\.svn|\.o|\.ko|target|SearchResults|make.txt"
+
+5、vi文件查找
+  vi :n 跳到第n行; /字符 进行查找 ; 按n 为下一个字符，gg表示回到开始，G结尾
+  
+6、nm 列出目标文件的符号  nm -A mmap.o
+
+7、python其他知识
+	
+	首先一个包是有子包的。
+	projectdir/
+   	 ------------------  __init__.py
+
+   	 | ----------------- core/
+    	                              |----------------- __init__.py
+       	                              |---------------- a.py
+            	                  |----------------- b.py
+                       	                  |----------------- common.py
+                                          |------------------ subcore/
+                                                                        |-------------------- __init__.py
+                                                                        |-------------------- com.py
+                                                                        |-------------------- test.py
+
+ 比如上面的包projectdir，它包含core这个子包。
+
+ 关于如何加载其他模块，同目录下的可以直接加载，比如当前目录在core下，b.py可以直接import a
+
+ 如果b.py想要调用com.py的内容，from subcore.com import * 或者 import subcore.com
+
+ 如果test.py想调用common.py内容，则需要跳到core目录下才行，所以需要增加sys.path搜索路径
+		import sys
+		sys.path.append("..")
+		import core.common
+
+8、python基本数据类型
+	
+	（1）多变量赋值，	a,b,c = 1   此时abc变量都会指向同一块内存。=号左边是变量名，右边是存储在变量中的值（具体的内存空间）
+	
+	（2）标准数据类型，	
+				Numbers数字，int float bool complex（复数）。用type()函数可以知道该变量的类型。注意python里面变量的类型是指
+						存储在变量的
+				String字符串，变量[头下标:尾下标]， 头下标从0开始，-1表示末尾开始位置。[0 : -1]表示从第一个到倒数第二个。
+						支持*(乘法)和+（加字符串。
+				List列表，	列表元素用，分隔，列表写在[]之间。list = [10171618, "徐勇", 1988.10]
+						列表支持索引和截取，截取格式，变量[头下标 : 尾下标]
+						列表的元素可以改变， list[2:5]  #删除元素
+				Tuple元祖，	元祖，用()表示，与列表的唯一不同是，元祖的个数不能改变，
+						比如tup = (10171618, "徐勇", 1988.10) ,tup[0] = 1000000, ×
+						元祖的元素可以连接,这点跟列表一致
+				Set集合，	集合是一个无序且不重复的元素序列，用于测试和删除重复元素
+						集合可以用{}创建，student = {'lilei', 'hanmeimei'}
+						集合还可以用set()函数创建，a = set('abcdefgabc')
+				Dict字典	字典是一种有序的数据类型，与列表等不同，字典通过键值来索引，键值是唯一的。
+						字典用{}表示，可以用{}创建一个字典，dict = {'num':10171618, 'name':'jaosn'}
+						字典也可以用dict()构建，dict(baidu=1, google=2)
+	（3）数据类型转换，
+				set(s),	将s序列转换成集合
+				dict(s),	将s序列转换成字典
+	
+	（4）逻辑运算符，
+				and 与
+				or  或
+				not 非
+				in  序列运算，判断是否在序列中
+				not in 序列运算，是否不在序列中
+	（5）字符串运算符，
+				isdecimal()	检查字符串是否包含十进制字符，
+				upper()	将小写字母转换成大写字母
+				swapcase()	将大写转小写，小写转大写
+				split(str = "", num = string.count(str))	以str为分隔符截取字符串，如果num有值，则去num个字符串
+				replace(old, new, max)	将字符串中的old替换成new，max替换次数（可选）
+				lower()	大小转小写
+				len()		字符串长度
+				isspace()	字符串是否只包含空格。
+	（6）列表 []
+				函数:
+				len(list)	列表元素个数
+				max(list)	列表最大的元素
+				min(list)	列表最小的元素
+				list(seq)	将元祖转成列表
+
+				方法：
+				list.append	在列表末尾添加对象
+				list.count	统计某对象在列表中出现的次数
+				list.insert	将对象插入列表
+
+	（7）元祖 (),元素不能改变
+				只有函数:
+				len(tuple)	元祖元素个数
+				max(tuple)	元祖最大的元素
+				min(tuple)	元祖最小的元素
+				list(seq)	将列表转成元祖				
+	
+	（8）字典 {}, key = value
+				函数:
+				len(dict)	字典元素个数
+				str(dict)	输出字典可以打印的字符串
+				type(val)	返回var的类型
+        
+9、sublime快捷键
+  控制台 ctrl + ~
+
+  整行上下移动 ctrl + shift + ↑ / ↓     逐词移动  ctrl + ↔
+
+  多词选择，ctrl + d 可以同时编辑
+
+  同一区域打散， ctrl + shift + L ，打散后可以同时编辑
+
+  同一区域合并， ctrl + j 将多行合并成一行
+
+  搜索文件	ctrl + p，  然后按 # 可以关键字搜索， @ 可以搜索函数  ：可以跳到指定行数
+
+  本文件内搜索函数 ctrl + R
+  
+  跳转到对应行数 ctrl + G
+
+  指定行左移右移， ctrl + [ 或者 ]
+
+  从括号开始跳到另一结尾 ctrl + M
+
+  选择括号内的那些行 ctrl + shift + M
+
+  打开sublime 插件 ctrl + shift + P
+
+  撤销 ctrl + y
+  
+  10、java修饰符
+  static 用于修饰类方法和类变量。
+	修饰变量：无论实例多少个对象，都只有一份拷贝。静态变量称为类变量。
+
+	修饰方法：只能使用静态变量。
+
+  final 用于修饰类、方法和变量
+	修饰变量：只能被显示的初始化一次，而且不能被改变。但是如果final修饰引用时，final对象不能改变，但是引用的值是可以改变的
+			通常与static一起使用  static final String TITLE = "HELLO"
+	
+	修饰方法：该方法可以被子类继承，但是不能被子类修改
+
+	修饰类：  该类不能被继承
+
+  abstract 用于修饰抽象方法和抽象类
+	修饰类：  抽象类不能被实例成对象，主要是为了扩充。如果一个类包含抽象方法，那么它肯定是抽象类。
+	
+	修饰方法：一种没有任何实现的方法，它的具体实现由子类实现。任何继承抽象类的子类必须实现父类的所有抽象方法，除非该子类也是抽象类
+
+  synchronized 用于修饰方法时，该方法只能被同一个线程访问
+  
+11、云计算
+云计算的三种服务模式
+  iaas   基础即服务   提供虚拟机、硬件资源等，典型的aws、openstack
+  paas   平台即服务   直接提供操作系统和存储资源等，典型的新浪sea、google App enine。主要面向开发者
+  iaas   软件即服务   直接向用户提供软件应用或者网页应用，百度云盘、苹果iCloud等。
+
+
+  公有云 通过inernet访问云资源、价格低
+  私有云 企业私有的云资源、一般面向大企业或者政府机构，对数据安全性要求高
+  混合云 公有云和私有云混合
+  
+12、hadoop
+  核心组件，分布式文件系统HDFS、MapReduce处理（并行计算），分布式数据库Hbase
+  
+13、scala
+	def count(p: (char) => Boolean) : int
+	count方法的参数p，它是一个入参为char，返回值为true/false的函数，方法的返回值是int
+  
+14、take、drop、reverse、takeRight 
+	take是从字符串首开始获取字符串,drop是从字符串首开始去除字符串。reverse与take相反，从末尾开始取
+	takeRight和dropRight是从字符串尾开始操作。这四个方法都是单方向的。
+ 
+	如果我想要字符串中间的子字符串，那么需要同时调用drop和dropRight，或者使用substring
+
+15、Eclipse快捷键
+  ctrl + alt + r 	打开资源，用于搜索文件
+
+  ctrl + o 		打开类视图
+
+  ctrl + e 		打开文件转换编辑器
+
+  alt + 上下键 		将该行上下移动
+
+  ctrl + f		搜索并替换
+
+  ctrl + /		本行注释
+
+  ctrl + =		字体放大
+
+  ctrl + shift + 上下	跳到下一个成员
+
+  ctrl + l		挑到制定行
+  
+16、sbt的功能结构
+	
+	|------build.sbt 			主要的工程定义文件
+	|------project			
+	|	|----build.properties	sbt版本
+	|	|----plugins.sbt		
+	|------src
+	|      |-----main			应用代码
+	|		|-----scala		对应scala语言实现
+	|		|-----java		对应java语言实现
+	|		|-----resources	可以添加一些静态配置文件，比如日志配置、sql等
+	|------target				最终生成的文件，jar包
+  
+17、针对一个分支的操作如下：
+
+ ·更新原项目代码到本地master分支，用rebase的方式
+	git pull upstream --rebase master
+
+ ·然后将更新推送到fork远程仓库
+	git push origin master
