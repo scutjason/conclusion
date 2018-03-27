@@ -1,0 +1,22 @@
+1、对于一个链表、数组、列表等，过滤数据（比如过滤小于1的数据）   
+
+  // 参考 word2vec.c 源码
+
+  struct vocab_word {
+    long long cn;  // 词频
+    int *point;  // 哈夫曼编码对应的节点内的路径
+    char *word, *code, codelen;  // 哈弗曼编码
+  };
+  
+  int vocab_size = 30000000;
+  struct vocab_word *vocab = (struct vocab_word *)malloc(vocab_size * sizeof(struct vocab_word));
+  
+  int a, b = 0
+  for (a = 0; a < vocab_size; a++){
+    if (vocab[a].cn < 1){
+        vacab[b].word = vacab[a].word;
+        vocat[b].cn = voacb[a].cn;
+        b++;  // 保证b一直是所需要的结果
+    }else
+        free(vocab[a].word);
+  }
