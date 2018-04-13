@@ -1,0 +1,95 @@
+
+算是按照正常的kmeans算法来实现的。
+
+先将词表中的每个词都随机分配给N个class，
+初始化N个class对应的中心向量
+用二范数更新每个中心向量new_cent
+最后再遍历每个词，看离哪个new_cent最近(内积最大)，就是哪一类。
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <pthread.h>
+
+long long classes = 0;
+long long layer1_size = 2;
+long long vocab_size = 100; //词表大小
+struct vocab_word {
+    long long cn;  // 词频
+    int *point;  // 哈夫曼树中从根节点到该词的路径，存放路径上每个非叶结点的索引
+    char *word, *code, codelen;  // 分别是词的字面，霍夫曼编码，编码长度
+};
+struct vocab_word *vocab; // 词表
+
+void KMeans() {
+    int clcn = classes, iter = 10, closeid;
+
+    //centcn：属于每个类的单词数
+    int *centcn = (int *)malloc(classes * sizeof(int));
+
+    //cl：每个单词所属的类编号
+    int *cl = (int *)calloc(vocab_size, sizeof(int));
+
+    //x：用来存储每次计算得到的词向量和类中心的内积，值越大说明距离越近
+    //closev：用来最大的内积，即距离最近
+    real closev, x;
+
+    //cent：每个类的中心向量
+    real *cent = (real *)calloc(classes * layer1_size, sizeof(real));
+
+    //先给所有单词随机指派类
+    for (a = 0; a < vocab_size; a++) cl[a] = a % clcn;
+
+    //一共迭代iter次
+    for (a = 0; a < iter; a++) {
+        //初始化类中心向量数组为0
+        for (b = 0; b < clcn * layer1_size; b++) cent[b] = 0;
+        //初始化每个类含有的单词数为1 
+        for (b = 0; b < clcn; b++) centcn[b] = 1;
+        //将刚才随意分配的所属于同一个类的词向量相加，并且计算属于每个类的词数
+        for (c = 0; c < vocab_size; c++) {
+            for (d = 0; d < layer1_size; d++) {
+                cent[layer1_size * cl[c] + d] += syn0[c * layer1_size + d];
+            }
+            centcn[cl[c]]++;
+        }
+        for (b = 0; b < clcn; b++) {
+            closev = 0;
+            for (c = 0; c < layer1_size; c++) {
+                //计算每个类的平均中心向量
+                cent[layer1_size * b + c] /= centcn[b];
+                //closev为类平均中心向量的二范数的平方 
+                closev += cent[layer1_size * b + c] * cent[layer1_size * b + c];
+            }
+            //对closev开方，此时的closev即为类平均中心向量的二范数  
+            closev = sqrt(closev);
+            //用得到的范数对中心向量进行归一化
+            for (c = 0; c < layer1_size; c++) cent[layer1_size * b + c] /= closev;
+        }
+        //遍历词表中的每个词，为其重新分配距离最近的类
+        for (c = 0; c < vocab_size; c++) {
+            closev = -10;
+            closeid = 0;
+            for (d = 0; d < clcn; d++) {
+                x = 0;
+                //对词向量和归一化的类中心向量做内积
+                for (b = 0; b < layer1_size; b++) x += cent[layer1_size * d + b] * syn0[c * layer1_size + b];
+                //内积越大说明两点之间距离越近
+                //取所有类中与这个词的词向量内积最大的一个类，将词分到这个类中  
+                if (x > closev) {
+                    closev = x;
+                    closeid = d;
+                }
+            }
+            cl[c] = closeid;
+        }
+    }
+    // Save the K-means classes
+    //经过多次迭代后，逐渐会将词向量向正确的类靠拢  
+    //输出K-means聚类结果到文件中
+    for (a = 0; a < vocab_size; a++) fprintf(fo, "%s %d\n", vocab[a].word, cl[a]);
+    free(centcn);
+    free(cent);
+    free(cl);
+}
