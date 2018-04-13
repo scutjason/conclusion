@@ -38,10 +38,17 @@
 
 
 
-有了前菜之后，接下来是主菜，google大神写的哈夫曼编码
+有了前菜之后，接下来是主菜，google大神写的哈夫曼编码 CreateBinaryTree()
   
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <pthread.h>
+
 #define MAX_CODE_LENGTH 40
-long long vocab_size = 100; 词表大小
+
+long long vocab_size = 100; //词表大小
 struct vocab_word {
     long long cn;  // 词频
     int *point;  // 哈夫曼树中从根节点到该词的路径，存放路径上每个非叶结点的索引
@@ -49,7 +56,7 @@ struct vocab_word {
 };
 struct vocab_word *vocab; // 词表
 
-  void CreateBinaryTree() {
+void CreateBinaryTree() {
     long long a, b, i, min1i, min2i, pos1, pos2, point[MAX_CODE_LENGTH];
     char code[MAX_CODE_LENGTH];
     long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));    // 记录词频
@@ -60,8 +67,16 @@ struct vocab_word *vocab; // 词表
     pos1 = vocab_size - 1;
     pos2 = vocab_size;
     // Following algorithm constructs the Huffman tree by adding one node at a time
+    // 只需要循环vocab_size - 1就能将树建好
     for (a = 0; a < vocab_size - 1; a++) {
         // First, find two smallest nodes 'min1, min2' 找出目前权值最小的两个点，
+        /**
+            连续比较两次的意义就在于，挑选出最小的两个数，
+            因为已经排好序了，所以挑选出来的数必然是最小的
+            当然这个最小数可能是之前两个最小数的和。也就是新生成的父节点
+            pos2表示新生成的父节点，这个也是非叶子节点。
+            pos1表示叶子节点
+        **/
         if (pos1 >= 0) {
             // 左边没有遍历完
             // 谁小谁移动
@@ -69,6 +84,7 @@ struct vocab_word *vocab; // 词表
                 min1i = pos1;
                 pos1--;
             } else {
+                // 如果叶子节点的父节点都搞完了，那就遍历父节点
                 min1i = pos2;
                 pos2++;
             }
@@ -89,29 +105,100 @@ struct vocab_word *vocab; // 词表
             pos2++;
         }
         count[vocab_size + a] = count[min1i] + count[min2i];
-        parent_node[min1i] = vocab_size + a; // 记录每个节点的父节点位置
+        // 记录每个节点的父节点位置
+        // 这里父节点的位置很巧妙，每一次计算都直接往后移动父节点，
+        // 并且这个父节点也是排好序的，不过是升序排列，父节点的权值肯定越来越大嘛
+        
+        parent_node[min1i] = vocab_size + a; 
         parent_node[min2i] = vocab_size + a;
-        binary[min2i] = 1; // 较大的为1，较小的为0
+        // [0 - pos1], [pos2 -  vocab_size + a]上的节点都是剩下的点，需要继续建立树。
+        
+        
+        // 记录每个节点对应的权值。权值较大的为1，权值较小的为0
+        // binary已经全部初始化为0了，所以只要标记权值较大的值为1就行
+        binary[min2i] = 1; 
     }
+    
     // Now assign binary code to each vocabulary word
+    // 树建好之后，就是给每个叶子节点分配路径
+    // 先从词频最大的节点开始
     for (a = 0; a < vocab_size; a++) {
         b = a;
         i = 0;
         while (1) {
             code[i] = binary[b];
-            point[i] = b;
+            point[i] = b; 
+            // printf("%d, %lld\n", vocab[a].cn, b);
             i++;
             b = parent_node[b];
-            if (b == vocab_size * 2 - 2) break;
+            if (b == vocab_size * 2 - 2) break;  // 如果到达根节点就退出
         }
         vocab[a].codelen = i;
-        vocab[a].point[0] = vocab_size - 2;
+        // 假设用vocab_size存储所有非叶子节点
+        // 那么根节点在导数第二个位置，
+        // 因为整个非叶子节点都只有vocab_size-1个，也及vocab_size - 2处
+        // 这里沿着根节点一直走下来到叶子节点时，也是逆序的。从右往左走
+        vocab[a].point[0] = vocab_size - 2; // 根节点位置
         for (b = 0; b < i; b++) {
-            vocab[a].code[i - b - 1] = code[b];
-            vocab[a].point[i - b] = point[b] - vocab_size;
+            vocab[a].code[i - b - 1] = code[b]; // 从根节点一直到叶子结点的编码，包含根节点
+            // 从跟节点一直到叶子节点的路径，最后一个节点b = 0，point[i]是自己，所以point是负值，反正没有意义
+            vocab[a].point[i - b] = point[b] - vocab_size;  
+            // printf("%d, %d\n", vocab[a].cn, vocab[a].point[i - b]);
         }
     }
     free(count);
     free(binary);
     free(parent_node);
 }
+
+int VocabCompare(const void *a, const void *b) {
+    return ((struct vocab_word *)b)->cn - ((struct vocab_word *)a)->cn; // 降序排列
+}
+
+void genVocab(int len, int num){
+    vocab_size = len;
+    vocab = (struct vocab_word *)calloc(len, sizeof(struct vocab_word));
+    int a = 0;
+    // Allocate memory for the binary tree construction
+    for (a = 0; a < vocab_size; a++) {
+
+        unsigned long long next_random = a;
+        next_random = next_random * (unsigned long long)25214903917 + 11;
+        vocab[a].cn = next_random % num;
+        vocab[a].code = (char *)calloc(MAX_CODE_LENGTH, sizeof(char));
+        vocab[a].point = (int *)calloc(MAX_CODE_LENGTH, sizeof(int));
+    }
+    
+    qsort(&vocab[0], vocab_size, sizeof(struct vocab_word), VocabCompare);
+}
+
+void print_vocab(){
+    int a = 0;
+    for (a = 0; a < vocab_size-1; a++) {
+        printf("%lld - ",vocab[a].cn);
+    }
+    printf("%lld\n",vocab[a].cn);
+}
+
+void print_tree(){
+    int a,b = 0;
+    for (a = 0; a < vocab_size-1; a++) {
+        printf("%lld(",vocab[a].cn);
+        for (b = 0; b < vocab[a].codelen; b++)
+            printf("%d",vocab[a].code[b]);
+        printf(") - ");
+        
+    }
+    printf("%lld(",vocab[a].cn);
+    for (b = 0; b < vocab[a].codelen; b++)
+        printf("%d",vocab[a].code[b]);
+    printf(")\n");
+}
+
+void main(){
+    genVocab(8, 200);
+    // print_vocab();
+    CreateBinaryTree();
+    print_tree();
+}
+
